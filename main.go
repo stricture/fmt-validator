@@ -36,7 +36,8 @@ func main() {
 
 	var hash string
 	var pattern string
-	if len(flag.Args()) < 2 {
+
+	if len(flag.Args()) >= 2 {
 		hash = flag.Arg(0)
 		pattern = flag.Arg(1)
 		ok, err := f.T(hash, pattern)
@@ -46,7 +47,9 @@ func main() {
 		if ok != "" {
 			fmt.Println(ok)
 		}
+		os.Exit(0)
 	}
+
 	if *name != "" {
 		format, ok := f.Formats()[*name]
 		if !ok {
@@ -56,6 +59,7 @@ func main() {
 	} else {
 		pattern = flag.Arg(0)
 	}
+
 	if *fname != "" {
 		fh, err := os.Open(*fname)
 		if err != nil {
@@ -72,6 +76,7 @@ func main() {
 				fmt.Println(ok)
 			}
 		}
+		os.Exit(0)
 	} else {
 		hash = flag.Arg(0)
 		ok, _ := f.T(hash, pattern)

@@ -16,9 +16,13 @@ func T(h, p string) (string, error) {
 	hash := bufio.NewReader(bytes.NewBufferString(h))
 	pattern := bufio.NewReader(bytes.NewBufferString(p))
 
-	for pch, err := pattern.ReadByte(); err == nil; pch, err = pattern.ReadByte() {
+	for {
+		pch, _, err := pattern.ReadRune()
+		if err != nil {
+			break
+		}
 		if pch != '%' {
-			hch, err := hash.ReadByte()
+			hch, _, err := hash.ReadRune()
 			switch {
 			case err != nil:
 				return "", nil
@@ -31,21 +35,22 @@ func T(h, p string) (string, error) {
 		}
 
 		var count int
-		var kind byte
-		var end byte
+		var kind rune
+		var end rune
 
-		c, err := pattern.ReadByte()
+		c, _, err := pattern.ReadRune()
 		if err != nil {
 			return "", err
 		}
 		if c == '*' {
-			kind, err = pattern.ReadByte()
+			kind, _, err = pattern.ReadRune()
 			if err != nil {
 				return "", err
 			}
 		} else {
 			cs := string(c)
-			for d, err := pattern.ReadByte(); ; d, err = pattern.ReadByte() {
+			for {
+				d, _, err := pattern.ReadRune()
 				if err != nil {
 					return "", err
 				}
@@ -61,39 +66,63 @@ func T(h, p string) (string, error) {
 				return "", err
 			}
 		}
-		end, err = pattern.ReadByte()
+		end, _, err = pattern.ReadRune()
 		readToEnd := err != nil
 
 		var found int
-		var h byte
+		var h rune
 		switch string(kind) {
 		case "d":
-			for h, err = hash.ReadByte(); err == nil && isDigit(h) && (readToEnd || h != end); h, err = hash.ReadByte() {
+			for {
+				h, _, err = hash.ReadRune()
+				if err != nil || !isDigit(h) || !(readToEnd || h != end) {
+					break
+				}
 				found++
 				t += string(h)
 			}
 		case "s":
-			for h, err := hash.ReadByte(); err == nil && (readToEnd || h != end); h, err = hash.ReadByte() {
+			for {
+				h, _, err := hash.ReadRune()
+				if err != nil || !(readToEnd || h != end) {
+					break
+				}
 				found++
 				t += string(h)
 			}
 		case "l":
-			for h, err := hash.ReadByte(); err == nil && (readToEnd || h != end); h, err = hash.ReadByte() {
+			for {
+				h, _, err := hash.ReadRune()
+				if err != nil || !(readToEnd || h != end) {
+					break
+				}
 				found++
 				t += strings.ToLower(string(h))
 			}
 		case "u":
-			for h, err := hash.ReadByte(); err == nil && (readToEnd || h != end); h, err = hash.ReadByte() {
+			for {
+				h, _, err := hash.ReadRune()
+				if err != nil || !(readToEnd || h != end) {
+					break
+				}
 				found++
 				t += strings.ToUpper(string(h))
 			}
 		case "x":
-			for h, err := hash.ReadByte(); err == nil && isHex(h) && (readToEnd || h != end); h, err = hash.ReadByte() {
+			for {
+				h, _, err := hash.ReadRune()
+				if err != nil || !isHex(h) || !(readToEnd || h != end) {
+					break
+				}
 				found++
 				t += strings.ToLower(string(h))
 			}
 		case "X":
-			for h, err := hash.ReadByte(); err == nil && isHex(h) && (readToEnd || h != end); h, err = hash.ReadByte() {
+			for {
+				h, _, err := hash.ReadRune()
+				if err != nil || !isHex(h) || !(readToEnd || h != end) {
+					break
+				}
 				found++
 				t += strings.ToUpper(string(h))
 			}
@@ -122,11 +151,11 @@ func Formats() map[string]F {
 	}
 }
 
-func isDigit(c byte) bool {
+func isDigit(c rune) bool {
 	return '0' <= c && c <= '9'
 }
 
-func isHex(c byte) bool {
+func isHex(c rune) bool {
 	switch {
 	case '0' <= c && c <= '9':
 		return true
